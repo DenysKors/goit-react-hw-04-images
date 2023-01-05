@@ -10,9 +10,7 @@ export class ImageGalleryItem extends Component {
     return responseData.map(({ id, webformatURL, largeImageURL, tags }) => (
       <GalleryItem key={id}>
         <GalleryImage
-          onClick={evt =>
-            getImageData(evt.target.dataset.source, evt.target.alt)
-          }
+          onClick={evt => getImageData(largeImageURL, evt.target.alt)}
           data-source={largeImageURL}
           src={webformatURL}
           alt={tags}

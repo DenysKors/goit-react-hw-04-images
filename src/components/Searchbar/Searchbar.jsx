@@ -1,53 +1,47 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { useState } from 'react';
 import { ReactComponent as SearchIcon } from 'images/search.svg';
 import { toast } from 'react-toastify';
 import { Head, Form, Button, Search, Input } from './Searchbar.styled';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class Searchbar extends Component {
-  state = {
-    query: '',
-  };
+export function Searchbar({ onSubmit }) {
+  const [query, setQuery] = useState('');
 
-  inputChange = evt => {
+  const inputChange = evt => {
     const { value } = evt.target;
-    this.setState({ query: value });
+    setQuery(value);
   };
 
-  formSubmit = evt => {
+  const formSubmit = evt => {
     evt.preventDefault();
-    if (this.state.query.trim() === '') {
+
+    if (query.trim() === '') {
       return toast.info('Enter request to search');
     }
-    this.props.onSubmit(this.state.query);
-    this.resetForm();
+
+    onSubmit(query);
+    setQuery('');
   };
 
-  resetForm = () => {
-    this.setState({ query: '' });
-  };
+  return (
+    <Head>
+      <Form onSubmit={formSubmit}>
+        <Button type="submit">
+          <SearchIcon />
+          <Search>Search</Search>
+        </Button>
 
-  render() {
-    return (
-      <Head>
-        <Form onSubmit={this.formSubmit}>
-          <Button type="submit">
-            <SearchIcon />
-            <Search>Search</Search>
-          </Button>
-
-          <Input
-            type="text"
-            autocomplete="off"
-            value={this.state.query}
-            placeholder="Search images and photos"
-            onChange={this.inputChange}
-          />
-        </Form>
-      </Head>
-    );
-  }
+        <Input
+          type="text"
+          autocomplete="off"
+          value={query}
+          placeholder="Search images and photos"
+          onChange={inputChange}
+        />
+      </Form>
+    </Head>
+  );
 }
 
 Searchbar.propTypes = {
