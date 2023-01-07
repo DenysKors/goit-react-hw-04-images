@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
 import { Puff } from 'react-loader-spinner';
@@ -10,107 +10,100 @@ import { Modal } from 'components/Modal/Modal';
 import { Box } from './App.styled';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    query: '',
-    responseData: [],
-    page: 1,
-    loading: false,
-    isModalOpen: false,
-    url: '',
-    tags: '',
-  };
+export function App() {
+  const [query, setQuery] = useState('');
+  const [responseData, setResponceData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [url, setUrl] = useState('');
+  const [tags, setTags] = useState('');
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query) {
-      this.getImagesList();
-    } else if (
-      prevState.page !== this.state.page &&
-      prevState.query === this.state.query
-    ) {
-      this.addImagesList();
+  useEffect(() => {
+    if (query === '' || page !== 1) {
+      return;
     }
-  }
 
-  getImagesList = async () => {
-    try {
-      const data = await fetchImages(this.state.query, this.state.page);
-      if (data.hits.length === 0) {
-        toast.info('Sorry, we cant find anything');
+    async function getImagesList() {
+      try {
+        const data = await fetchImages(query, page);
+        if (data.hits.length === 0) {
+          toast.info('Sorry, we cant find anything');
+        }
+        setResponceData(data.hits);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-      this.setState({ responseData: data.hits });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      this.setState({ loading: false });
     }
-  };
 
-  addImagesList = async () => {
-    try {
-      this.setState({ loading: true });
-      const data = await fetchImages(this.state.query, this.state.page);
-      this.setState(prevState => ({
-        responseData: [...this.state.responseData, ...data.hits],
-      }));
-    } catch (error) {
-      toast.warn('Something weird happend. Please try your request again');
-    } finally {
-      this.setState({ loading: false });
+    getImagesList();
+  }, [query, page]);
+
+  useEffect(() => {
+    if (query === '' || page === 1) {
+      return;
     }
+
+    setLoading(true);
+
+    async function addImagesList() {
+      try {
+        const data = await fetchImages(query, page);
+        setResponceData(prevResponceData => [
+          ...prevResponceData,
+          ...data.hits,
+        ]);
+      } catch (error) {
+        toast.warn('Something weird happend. Please try your request again');
+      } finally {
+        setLoading(false);
+      }
+    }
+    addImagesList();
+  }, [query, page]);
+
+  const searchQuery = formQuery => {
+    const normalizedQuery = formQuery.toLowerCase().trim();
+    setQuery(normalizedQuery);
+    setResponceData([]);
+    setPage(1);
+    setLoading(true);
   };
 
-  searchQuery = query => {
-    const normalizedQuery = query.toLowerCase().trim();
-    this.setState({
-      query: normalizedQuery,
-      responseData: [],
-      page: 1,
-      loading: true,
-    });
+  const handleLoad = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  handleLoad = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const openModal = () => {
+    setIsModalOpen(true);
   };
 
-  openModal = () => {
-    this.setState({ isModalOpen: true });
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
-  closeModal = () => {
-    this.setState({ isModalOpen: false });
+  const getImageData = (imageUrl, imageTags) => {
+    setUrl(imageUrl);
+    setTags(imageTags);
+    openModal();
   };
 
-  getImageData = (url, tags) => {
-    this.setState({ url, tags });
-    this.openModal();
-  };
-
-  render() {
-    const { responseData, loading, isModalOpen, url, tags } = this.state;
-    return (
-      <Box>
-        <Searchbar onSubmit={this.searchQuery} />
-        {responseData.length > 0 && (
-          <ImageGallery
-            responseData={responseData}
-            getImageData={this.getImageData}
-          />
-        )}
-        {loading && (
-          <Puff
-            wrapperStyle={{ display: 'inline-block', textAlign: 'center' }}
-          />
-        )}
-        {responseData.length > 0 && <LoadButton onBtnClick={this.handleLoad} />}
-        {isModalOpen && (
-          <Modal onClose={this.closeModal}>
-            {<img src={url} alt={tags} />}
-          </Modal>
-        )}
-        <ToastContainer position="top-left" theme="dark" autoClose={3000} />
-      </Box>
-    );
-  }
+  return (
+    <Box>
+      <Searchbar onSubmit={searchQuery} />
+      {responseData.length > 0 && (
+        <ImageGallery responseData={responseData} getImageData={getImageData} />
+      )}
+      {loading && (
+        <Puff wrapperStyle={{ display: 'inline-block', textAlign: 'center' }} />
+      )}
+      {responseData.length > 0 && <LoadButton onBtnClick={handleLoad} />}
+      {isModalOpen && (
+        <Modal onClose={closeModal}>{<img src={url} alt={tags} />}</Modal>
+      )}
+      <ToastContainer position="top-left" theme="dark" autoClose={3000} />
+    </Box>
+  );
 }

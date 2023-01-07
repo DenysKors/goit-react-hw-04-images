@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { ReactComponent as SearchIcon } from 'images/search.svg';
 import { toast } from 'react-toastify';
 import { Head, Form, Button, Search, Input } from './Searchbar.styled';
-import 'react-toastify/dist/ReactToastify.css';
 
 export function Searchbar({ onSubmit }) {
   const [query, setQuery] = useState('');
